@@ -1,0 +1,51 @@
+name: Rename Images with AI and Release
+# 触发条件
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'images/**/*' # 监听 images文件下所有目录
+
+  pull_request:  # 监听 pull request 事件
+    branches:
+      - main
+    paths:
+      - 'images/**/*' # 监听 images文件下所有目录
+
+# 权限配置
+permissions:
+  contents: write
+  releases: write
+
+jobs:
+  rename_images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests gitpython Pillow PyGithub openai
+
+      - name: Rename images
+        env:
+          MINERU_API_ENDPOINT: ${{ secrets.MINERU_API_ENDPOINT }}
+          MINERU_API_TOKEN: ${{ secrets.MINERU_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }} # 仓库名
+          GITHUB_REF_NAME: ${{ github.ref }}  # tag 或者 branch
+          GITHUB_EVENT_PATH: ${{ github.event_path }}  # event payload
+        run: |
+          python .github/workflows/rename_images.py
