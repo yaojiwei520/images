@@ -98,30 +98,32 @@ def upload_zip_to_release(github_token: str, repo_dir: str, zip_content: bytes, 
 def summarize_text_with_openai(text: str) -> Optional[str]:
     """使用 OpenAI API 总结文本内容。"""
     try:
-        openai.api_key = os.environ.get("OPENAI_API_KEY")
-        if not openai.api_key:
-            print("请设置 OPENAI_API_KEY 环境变量!")
-            return None
+        openai_api_key = os.environ.get("OPENAI_API_KEY", "dummy_key") # 使用默认值防止报错,不验证key
+        openai_api_base = os.environ.get("OPENAI_API_BASE", "https://free.v36.cm") # 使用默认值
 
-        # 如果需要，设置 API Base URL
-        openai.api_base = os.environ.get("OPENAI_API_BASE")  # 从环境变量中获取 API Base URL
-        if openai.api_base:
-            print(f"使用自定义 OpenAI API Base URL: {openai.api_base}")
+        if not openai_api_key:
+            print("请设置 OPENAI_API_KEY 环境变量!")
+            #return None # 为了方便测试, 使用默认key和base, 不强制退出
+
+        client = openai.OpenAI(
+            api_key=openai_api_key,
+            base_url=openai_api_base  # 使用环境变量中的 base_url
+        )
 
         prompt = (
             "请以简洁准确的方式总结以下内容，总结限制在15个字内，不需要添加任何内容中没有提及的信息，"
             "如果内容中没有提到某个事物，请不要虚构或猜测它是否存在: \n{text}"
         ).format(text=text)
 
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens=50,  # 限制输出的token数量
-            n=1,
-            stop=None,
-            temperature=0.3,  # 降低温度，减少随机性
+        response = client.chat.completions.create(
+            messages=[
+                {'role': 'user', 'content': prompt},  # 使用 prompt
+            ],
+            model='gpt-4o-mini',  # 模型改为 gpt-4o-mini
+            max_tokens=50,
+            temperature=0.3,
         )
-        summary = response.choices[0].text.strip()
+        summary = response.choices[0].message.content.strip()  # 获取 content
         return summary
 
     except openai.error.OpenAIError as e:
