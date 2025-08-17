@@ -103,6 +103,11 @@ def summarize_text_with_openai(text: str) -> Optional[str]:
             print("请设置 OPENAI_API_KEY 环境变量!")
             return None
 
+        # 如果需要，设置 API Base URL
+        openai.api_base = os.environ.get("OPENAI_API_BASE")  # 从环境变量中获取 API Base URL
+        if openai.api_base:
+            print(f"使用自定义 OpenAI API Base URL: {openai.api_base}")
+
         prompt = (
             "请以简洁准确的方式总结以下内容，总结限制在15个字内，不需要添加任何内容中没有提及的信息，"
             "如果内容中没有提到某个事物，请不要虚构或猜测它是否存在: \n{text}"
