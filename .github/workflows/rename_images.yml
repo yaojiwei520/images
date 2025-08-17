@@ -44,8 +44,19 @@ jobs:
           MINERU_API_TOKEN: ${{ secrets.MINERU_API_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}  # 添加 OpenAI API Base URL
           GITHUB_REPOSITORY: ${{ github.repository }} # 仓库名
           GITHUB_REF_NAME: ${{ github.ref }}  # tag 或者 branch
           GITHUB_EVENT_PATH: ${{ github.event_path }}  # event payload
         run: |
           python .github/workflows/rename_images.py
+
+      - name: Clean up
+        if: always()  # 总是执行，即使之前的步骤失败
+        run: |
+          # 删除可能存在的临时文件和目录
+          rm -rf /home/runner/work/_temp
+          # 清理 pip 缓存
+          python -m pip cache purge
+          # 如果有其他需要清理的内容，可以在这里添加
+          echo "清理完成"
